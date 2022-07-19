@@ -186,7 +186,7 @@ template<> inline void init_fft_library<OmpThreaded>()
 {
   //switch FFT domain of MKL to single-threaded mode as Intel suggests
   //this should work starting from MKL 10.0
-  mkl::mkl_domain_set_num_threads(1, MKL_FFT);
+  mkl::mkl_domain_set_num_threads(1, MKL_DOMAIN_FFT);
 }
 
 //---------------------------------------------------------------------------
