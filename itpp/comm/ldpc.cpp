@@ -928,7 +928,6 @@ ivec LDPC_Generator_Systematic::construct(LDPC_Parity* const H,
   it_info_debug("Computing a systematic generator matrix...");
 
   int j1 = 0, j2 = 0;
-  int rank;
   ivec perm;
   GF2mat T, U;
   for (int k = 0; k < nvar; k++) {
@@ -938,26 +937,26 @@ ivec LDPC_Generator_Systematic::construct(LDPC_Parity* const H,
     bvec c = Hd.get_col(col_order(k));
     if (j2 == 0) {     // first column in P2 is number col_order(k)
       P2 = GF2mat(c);
-      rank = P2.T_fact(T, U, perm);
-      actual_ordering(k) = nvar - ncheck;
+      P2.T_fact(T, U, perm);/* return value not used */
+      actual_ordering(col_order(k)) = nvar - ncheck;
       j2++;
     }
     else {
       if (j2 < ncheck) {
         if (P2.T_fact_update_addcol(T, U, perm, c)) {
           P2 = P2.concatenate_horizontal(c);
-          actual_ordering(k) = nvar - ncheck + j2;
+          actual_ordering(col_order(k)) = nvar - ncheck + j2;
           j2++;
           continue;
         }
       }
       if (j1 == 0) {
         P1 = GF2mat(c);
-        actual_ordering(k) = j1;
+        actual_ordering(col_order(k)) = j1;
       }
       else {
         P1 = P1.concatenate_horizontal(c);
-        actual_ordering(k) = j1;
+        actual_ordering(col_order(k)) = j1;
       }
       j1++;
     }
@@ -988,7 +987,7 @@ ivec LDPC_Generator_Systematic::construct(LDPC_Parity* const H,
   G = G.transpose();  // store the generator matrix in transposed form
   it_info_debug("Systematic generator matrix computed.");
 
-  init_flag = true;
+  mark_initialized();
 
   return actual_ordering;
 }
@@ -1001,7 +1000,7 @@ void LDPC_Generator_Systematic::save(const std::string& filename) const
   f >> Name("Fileversion") >> ver;
   it_assert(ver == LDPC_binary_file_version,
             "LDPC_Generator_Systematic::save(): Unsupported file format");
-  f << Name("G_type") << type;
+  f << Name("G_type") << get_type();
   f << Name("G") << G;
   f.close();
 }
@@ -1016,18 +1015,18 @@ void LDPC_Generator_Systematic::load(const std::string& filename)
             "LDPC_Generator_Systematic::load(): Unsupported file format");
   std::string gen_type;
   f >> Name("G_type") >> gen_type;
-  it_assert(gen_type == type,
+  it_assert(gen_type == get_type(),
             "LDPC_Generator_Systematic::load(): Wrong generator type");
   f >> Name("G") >> G;
   f.close();
 
-  init_flag = true;
+  mark_initialized();
 }
 
 
 void LDPC_Generator_Systematic::encode(const bvec &input, bvec &output)
 {
-  it_assert(init_flag, "LDPC_Generator_Systematic::encode(): Systematic "
+  it_assert(is_initialized(), "LDPC_Generator_Systematic::encode(): Systematic "
             "generator not set up");
   it_assert(input.size() == G.cols(), "LDPC_Generator_Systematic::encode(): "
             "Improper input vector size (" << input.size() << " != "
@@ -1051,7 +1050,7 @@ BLDPC_Generator::BLDPC_Generator(const BLDPC_Parity* const H,
 
 void BLDPC_Generator::encode(const bvec &input, bvec &output)
 {
-  it_assert(init_flag, "BLDPC_Generator::encode(): Cannot encode with not "
+  it_assert(is_initialized(), "BLDPC_Generator::encode(): Cannot encode with not "
             "initialized generator");
   it_assert(input.size() == K, "BLDPC_Generator::encode(): Input vector "
             "length is not equal to K");
@@ -1133,14 +1132,14 @@ void BLDPC_Generator::construct(const BLDPC_Parity* const H)
       r1++;
     }
 
-    init_flag = true;
+    mark_initialized();
   }
 }
 
 
 void BLDPC_Generator::save(const std::string& filename) const
 {
-  it_assert(init_flag,
+  it_assert(is_initialized(),
             "BLDPC_Generator::save(): Can not save not initialized generator");
   // Every Z-th row of H_enc until M-Z
   GF2mat H_T(M / Z - 1, N);
@@ -1155,7 +1154,7 @@ void BLDPC_Generator::save(const std::string& filename) const
   f >> Name("Fileversion") >> ver;
   it_assert(ver == LDPC_binary_file_version, "BLDPC_Generator::save(): "
             "Unsupported file format");
-  f << Name("G_type") << type;
+  f << Name("G_type") << get_type();
   f << Name("H_T") << H_T;
   f << Name("H_Z") << H_Z;
   f << Name("Z") << Z;
@@ -1173,7 +1172,7 @@ void BLDPC_Generator::load(const std::string& filename)
             "Unsupported file format");
   std::string gen_type;
   f >> Name("G_type") >> gen_type;
-  it_assert(gen_type == type,
+  it_assert(gen_type == get_type(),
             "BLDPC_Generator::load(): Wrong generator type");
   f >> Name("H_T") >> H_T;
   f >> Name("H_Z") >> H_Z;
@@ -1196,7 +1195,7 @@ void BLDPC_Generator::load(const std::string& filename)
   }
   H_enc = H_enc.concatenate_vertical(H_Z);
 
-  init_flag = true;
+  mark_initialized();
 }
 
 
@@ -1204,24 +1203,26 @@ void BLDPC_Generator::load(const std::string& filename)
 // LDPC_Code
 // ----------------------------------------------------------------------
 
-LDPC_Code::LDPC_Code(): H_defined(false), G_defined(false), dec_method("BP"),
+LDPC_Code::LDPC_Code(): H_defined(false), G_defined(false),
     max_iters(50), psc(true), pisc(false),
-    llrcalc(LLR_calc_unit()) { }
+    llrcalc(LLR_calc_unit()) { set_decoding_method("BP");}
 
 LDPC_Code::LDPC_Code(const LDPC_Parity* const H,
                      LDPC_Generator* const G_in,
                      bool perform_integrity_check):
-    H_defined(false), G_defined(false), dec_method("BP"), max_iters(50),
+    H_defined(false), G_defined(false), max_iters(50),
     psc(true), pisc(false), llrcalc(LLR_calc_unit())
 {
+    set_decoding_method("BP");
     set_code(H, G_in, perform_integrity_check);
 }
 
 LDPC_Code::LDPC_Code(const std::string& filename,
                      LDPC_Generator* const G_in):
-    H_defined(false), G_defined(false), dec_method("BP"), max_iters(50),
+    H_defined(false), G_defined(false), max_iters(50),
     psc(true), pisc(false), llrcalc(LLR_calc_unit())
 {
+  set_decoding_method("BP");
   load_code(filename, G_in);
 }
 
@@ -1661,6 +1662,23 @@ bool LDPC_Code::syndrome_check(const QLLRvec &LLR) const
   return true;   // codeword is valid
 };
 
+QLLRvec LDPC_Code::soft_syndrome_check(const QLLRvec &LLR) const
+{
+  QLLRvec result(ncheck);
+  int i,j,vi,vind;
+
+  for (j=0; j<ncheck; j++) {
+    result(j)=-QLLR_MAX;
+    vind=j;
+    for (i=0; i<sumX2(j); i++) {
+      vi=V(vind);
+      result(j) = llrcalc.Boxplus(LLR(vi),result(j));
+      vind += ncheck;
+    }
+  }
+
+  return result;
+}
 
 // ----------------------------------------------------------------------
 // LDPC_Code private methods
@@ -1790,7 +1808,7 @@ std::ostream &operator<<(std::ostream &os, const LDPC_Code &C)
   << "Row degrees (node perspective): " << rdeg << "\n"
   << "-------------------------------------------------\n"
   << "Decoder parameters:\n"
-  << " - method : " << C.dec_method << "\n"
+  << " - method : " << C.get_decoding_method() << "\n"
   << " - max. iterations : " << C.max_iters << "\n"
   << " - syndrome check at each iteration : " << C.psc << "\n"
   << " - syndrome check at start : " << C.pisc << "\n"

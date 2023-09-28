@@ -34,6 +34,11 @@
 #include <itpp/base/itcompat.h>
 #include <itpp/base/math/misc.h>
 
+#ifdef _MSC_VER
+//suppress warnings regarding the use infinity in fp arithmetic
+#pragma warning(disable: 4056)
+#pragma warning(disable: 4756)
+#endif
 
 /*
  * Gamma function
@@ -199,10 +204,10 @@ double gam(double x)
   if (std::isnan(x))
     return(x);
 
-  if (std::isinf(x) == 1)
-    return(x);
-  if (std::isinf(x) == -1)
-    return(NAN);
+  if (std::isinf(x))
+  {
+	return (x > 0.0 ? x : NAN);
+  }
 
   q = fabs(x);
 

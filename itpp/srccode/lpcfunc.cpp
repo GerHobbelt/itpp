@@ -115,8 +115,8 @@ vec levinson(const vec &R2, int order)
   for (j = 0;j < out.length();j++) {
     out[j] = a[j];
   }
-  delete any;
-  delete a;
+  delete[] any;
+  delete[] a;
   return out;
 }
 
@@ -152,7 +152,7 @@ vec poly2ac(const vec &poly)
     a[m] = k[m-1];
     alfa = alfa * (1 - sqr(k[m-1]));
   }
-  delete any;
+  delete[] any;
   return r;
 }
 
@@ -517,15 +517,15 @@ vec lerouxguegenrc(const vec &R, int order)
   }
   for (m = 1;m <= M;m++) {
     k[m-1] = -r[M+m] / r[M];
-    for (j = -M;j <= M;j++) {
+    for (j = -M+m+1;j <= M;j++) {
       rny[M+j] = r[M+j] + k[m-1] * r[M+m-j];
     }
     for (j = -M;j <= M;j++) {
       r[M+j] = rny[M+j];
     }
   }
-  delete r;
-  delete rny;
+  delete[] r;
+  delete[] rny;
   return k;
 }
 

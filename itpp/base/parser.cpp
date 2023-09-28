@@ -80,7 +80,7 @@ void Parser::pre_parsing(void)
   // Remove lines starting with '%' or have zero length:
   for (i = 0; i < size; i++) {
     Line = SetupStrings(i);
-    if ((Line[0] != '%') && (Line.length() != 0)) {
+    if ((Line.length() != 0) && (Line[0] != '%')) {
       SetupStrings(count) = Line;
       count++;
     }
@@ -93,7 +93,7 @@ void Parser::pre_parsing(void)
   NewLine = "";
   for (i = 0; i < SetupStrings.size(); i++) {
     Line = SetupStrings(i);
-    n = Line.size();
+    n = int(Line.size());
     cont_line = false;
     for (k = 0; k < (n - 2); k++) {
       if ((Line[k] == '.') && (Line[k+1] == '.') && (Line[k+2] == '.')) {
@@ -118,7 +118,7 @@ void Parser::pre_parsing(void)
   for (i = 0; i < size; i++) {
     NewLine = "";
     Line = SetupStrings(i);
-    n = Line.length();
+    n = int(Line.length());
     j = 0; //counter in Line
     while (j < n) {
       switch (Line[j]) {
@@ -136,19 +136,19 @@ void Parser::pre_parsing(void)
         break;
       case '[':
         //Don't remove blanks between '[' and ']'
-        while ((Line[j] != ']') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != ']')) { NewLine += Line[j]; j++; }
         if (j < n) { NewLine += Line[j]; j++; }
         break;
       case '{':
         //Don't remove blanks between '{' and '}'
-        while ((Line[j] != '}') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != '}')) { NewLine += Line[j]; j++; }
         if (j < n) { NewLine += Line[j]; j++; }
         break;
       case '"':
         //Don't remove blanks between '"' and '"'
         NewLine += Line[j];
         j++; //Read in the first '"'
-        while ((Line[j] != '"') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != '"')) { NewLine += Line[j]; j++; }
         NewLine += Line[j];
         j++;
         break;
@@ -156,7 +156,7 @@ void Parser::pre_parsing(void)
         //Don't remove blanks between '\'' and '\''
         NewLine += Line[j];
         j++; //Read in the first '\''
-        while ((Line[j] != '\'') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != '\'')) { NewLine += Line[j]; j++; }
         NewLine += Line[j];
         j++;
         break;
@@ -182,7 +182,7 @@ void Parser::pre_parsing(void)
 
     NewLine = "";
     Line = SetupStrings(i);
-    n = Line.length();
+    n = int(Line.length());
     j = 0;
 
     while (j < n) {
@@ -191,7 +191,7 @@ void Parser::pre_parsing(void)
 
       case '[':
         //A vector or a matrix
-        while ((Line[j] != ']') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != ']')) { NewLine += Line[j]; j++; }
         if (Line[j] == ']') { NewLine += Line[j]; j++; }
         if (j == n) {
           if (count >= TempSetupStrings.size()) { TempSetupStrings.set_size(2*count, true); }
@@ -205,7 +205,7 @@ void Parser::pre_parsing(void)
         //A string
         NewLine += Line[j];
         j++; //Read in the first '"'
-        while ((Line[j] != '"') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != '"')) { NewLine += Line[j]; j++; }
         if (Line[j] == '"') { NewLine += Line[j]; j++; }
         if (j == n) {
           if (count >= TempSetupStrings.size()) { TempSetupStrings.set_size(2*count, true); }
@@ -220,7 +220,7 @@ void Parser::pre_parsing(void)
         //A string
         NewLine += Line[j];
         j++; //Read in the first '\''
-        while ((Line[j] != '\'') && (j < n)) { NewLine += Line[j]; j++; }
+        while ((j < n) && (Line[j] != '\'')) { NewLine += Line[j]; j++; }
         if (Line[j] == '\'') { NewLine += Line[j]; j++; }
         if (j == n) {
           if (count >= TempSetupStrings.size()) { TempSetupStrings.set_size(2*count, true); }
@@ -607,7 +607,7 @@ std::string Parser::findname(const std::string &name, bool &error_flag, bool &pr
   }
 
   //Remove [, ],",' and ending ;. Set the print_flag:
-  n = Temp.size();
+  n = int(Temp.size());
   Out = "";
   for (i = 0; i < n; i++) {
     switch (Temp[i]) {
@@ -642,7 +642,7 @@ std::string Parser::findname(const std::string &name, bool &error_flag, bool &pr
 
     Temp = Out;
     Out  = "";
-    n    = Temp.size();
+    n    = int(Temp.size());
     j    = 0;
 
     while ((Temp[j]   == ' ') || (Temp[j]   == '\t') || (Temp[j]   == '\n')) { j++; } //Remove spaces/tabs/newline in beginning
@@ -651,7 +651,7 @@ std::string Parser::findname(const std::string &name, bool &error_flag, bool &pr
     while (j < n) {
 
       //Read in data element:
-      while ((Temp[j] != ' ') && (Temp[j] != '\t') && (Temp[j] != '\n') && (Temp[j] != ',') && (Temp[j] != ';') && (j < n)) {
+      while ((j < n) && (Temp[j] != ' ') && (Temp[j] != '\t') && (Temp[j] != '\n') && (Temp[j] != ',') && (Temp[j] != ';')) {
         Out += Temp[j];
         j++;
       }
@@ -659,7 +659,7 @@ std::string Parser::findname(const std::string &name, bool &error_flag, bool &pr
       //Read separator:
       if (j < (n - 1)) {
         //Remove spaces before separator
-        while (((Temp[j] == ' ') || (Temp[j] == '\t') || (Temp[j] == '\n')) && (j < n)) { j++; }
+        while ((j < n) && ((Temp[j] == ' ') || (Temp[j] == '\t') || (Temp[j] == '\n'))) { j++; }
         //Insert Separator:
         if (j < n) {
           if (Temp[j] == ';') { Out += ';'; j++; }
@@ -669,7 +669,7 @@ std::string Parser::findname(const std::string &name, bool &error_flag, bool &pr
           else { Out += ' '; }
         }
         //Remove spaces after separator:
-        while (((Temp[j] == ' ') || (Temp[j] == '\t') || (Temp[j] == '\n')) && (j < n)) { j++; }
+        while ((j < n) && ((Temp[j] == ' ') || (Temp[j] == '\t') || (Temp[j] == '\n'))) { j++; }
       }
 
     }

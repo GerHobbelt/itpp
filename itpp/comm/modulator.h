@@ -34,6 +34,7 @@
 #include <itpp/base/math/log_exp.h>
 #include <itpp/base/converters.h>
 #include <itpp/base/math/min_max.h>
+#include <itpp/itexports.h>
 
 
 namespace itpp
@@ -548,7 +549,15 @@ void Modulator<T>::calculate_softbit_matrices()
   }
 }
 
+//! \cond
 
+// ----------------------------------------------------------------------
+// Instantiations
+// ----------------------------------------------------------------------
+ITPP_EXPORT_TEMPLATE template class ITPP_EXPORT Modulator<double>;
+ITPP_EXPORT_TEMPLATE template class ITPP_EXPORT Modulator<std::complex<double> >;
+
+//! \endcond
 
 // ----------------------------------------------------------------------
 // QAM : Modulator_2D
@@ -562,7 +571,8 @@ void Modulator<T>::calculate_softbit_matrices()
   \ldots \f$. Symbol values in each dimension are: \f$\{-(\sqrt{M}-1),
   \ldots, -3, -1, 1, 3, \ldots, (\sqrt{M}-1)\}\f$. The bitmap is Gray
   encoded. Symbols are normalized so that the average energy is 1. That
-  is, normalized with \f$\sqrt{2(M-1)/3}\f$.
+  is, normalized with \f$\sqrt{2(M-1)/3}\f$. For odd values of \f$k\f$,
+  a regular rectangular constellation is used.
 
   Beside hard demapping, this class can also perform soft demodulation,
   calculating the log-MAP estimate of the individual bits. To use it
@@ -574,7 +584,7 @@ void Modulator<T>::calculate_softbit_matrices()
   It is also assumed that the channel estimates are perfect when
   calculating the soft bits.
 */
-class QAM : public Modulator<std::complex<double> >
+class ITPP_EXPORT QAM : public Modulator<std::complex<double> >
 {
 public:
   //! Default Constructor
@@ -623,7 +633,7 @@ protected:
   It is also assumed that the channel estimates are perfect when
   calculating the soft bits.
 */
-class PSK : public Modulator<std::complex<double> >
+class ITPP_EXPORT PSK : public Modulator<std::complex<double> >
 {
 public:
   //! Default Constructor
@@ -665,7 +675,7 @@ public:
   It is also assumed that the channel estimates are perfect when
   calculating the soft bits.
 */
-class QPSK : public PSK
+class ITPP_EXPORT QPSK : public PSK
 {
 public:
   //! Class Constructor
@@ -763,7 +773,7 @@ public:
 
   \sa BPSK
 */
-class BPSK_c : public PSK
+class ITPP_EXPORT BPSK_c : public PSK
 {
 public:
   //! Constructor
@@ -864,7 +874,7 @@ public:
   a similar class named BPSK_c, which uses complex values for symbols and
   therefore is compatible with other PSK and QAM based modulators.
 */
-class BPSK : public Modulator<double>
+class ITPP_EXPORT BPSK : public Modulator<double>
 {
 public:
   //! Constructor
@@ -956,7 +966,7 @@ public:
 
   \sa PAM
 */
-class PAM_c : public Modulator<std::complex<double> >
+class ITPP_EXPORT PAM_c : public Modulator<std::complex<double> >
 {
 public:
   //! Default Constructor
@@ -1092,7 +1102,7 @@ protected:
   a similar class named PAM_c, which uses complex values for symbols and
   therefore is compatible with other PSK and QAM based modulators.
 */
-class PAM : public Modulator<double>
+class ITPP_EXPORT PAM : public Modulator<double>
 {
 public:
   //! Default Constructor

@@ -31,7 +31,7 @@
 
 #include <itpp/base/vec.h>
 #include <itpp/base/mat.h>
-
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -61,7 +61,7 @@ the order of the outbut bits will be:
   error = crc.decode(rec_bits, decoded_bits);
   \endcode
 */
-class CRC_Code
+class ITPP_EXPORT CRC_Code
 {
 public:
 

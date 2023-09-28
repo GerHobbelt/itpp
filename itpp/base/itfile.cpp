@@ -133,7 +133,6 @@ bool it_ifile::read_check_file_header()
 
 void it_ifile::read_data_header(data_header &h)
 {
-  std::streampos p = s.tellg();
   s.clear();
   s >> h.hdr_bytes;
   s >> h.data_bytes;
@@ -502,11 +501,10 @@ void it_ifile::low_level_read_hi(Array<std::complex<double> > &v)
 // it_file class
 // ----------------------------------------------------------------------
 
-it_file::it_file(): low_prec(false), next_name(""), next_desc(""),
-    fname("") {}
+it_file::it_file(): low_prec(false), _strings(new Strings_Holder) {}
 
 it_file::it_file(const std::string &name, bool trunc):
-    low_prec(false), next_name(""), next_desc(""), fname("")
+    low_prec(false), _strings(new Strings_Holder)
 {
   open(name, trunc);
 }
@@ -526,7 +524,7 @@ void it_file::open(const std::string &name, bool trunc)
     it_error("it_file::open(): Corrupt file (not an it_file)");
   }
 
-  fname = name;
+  fname() = name;
 }
 
 void it_file::close()
@@ -547,11 +545,11 @@ void it_file::write_file_header()
 
 void it_file::write_data_header(const std::string &type, uint64_t size)
 {
-  it_error_if(next_name == "", "it_file::write_data_header(): Can not "
+  it_error_if(next_name() == "", "it_file::write_data_header(): Can not "
               "write without a name");
-  write_data_header(type, next_name, size, next_desc);
-  next_name = "";
-  next_desc = "";
+  write_data_header(type, next_name(), size, next_desc());
+  next_name() = "";
+  next_desc() = "";
 }
 
 void it_file::write_data_header(const std::string &type,
@@ -687,13 +685,13 @@ void it_file::pack()
 
   // close and reopen file truncating it
   s.close();
-  s.open(fname, true, bfstream_base::l_endian);
+  s.open(fname(), true, bfstream_base::l_endian);
   // write compacted data to the reopend empty file
   for (uint64_t i = 0; i < size; ++i)
     s.put(buffer[i]);
 
   // free buffer memory
-  delete buffer;
+  delete[] buffer;
 
   // go back to the first data block (skiping file header)
   s.seekg(sizeof(file_header));
@@ -1753,7 +1751,7 @@ it_file &operator<<(it_file &f, const Array<std::string> &v)
   // calculate total length of Array
   int sum_l = 0;
   for (int i = 0; i < v.size(); ++i)
-    sum_l += v(i).size();
+    sum_l += int(v(i).size());
 
   // write header
   f.write_data_header("stringArray", sizeof(uint64_t) * (1 + v.size())
@@ -2318,16 +2316,15 @@ void it_ifile_old::low_level_read_hi(Array<std::complex<double> > &v)
   }
 }
 
-it_file_old::it_file_old()
+it_file_old::it_file_old():_string(new String_Holder())
 {
   low_prec = false;
-  next_name = "";
 }
 
-it_file_old::it_file_old(const std::string &name, bool trunc)
+it_file_old::it_file_old(const std::string &name, bool trunc):
+_string(new String_Holder())
 {
   low_prec = false;
-  next_name = "";
   open(name, trunc);
 }
 
@@ -2365,9 +2362,9 @@ void it_file_old::write_file_header()
 
 void it_file_old::write_data_header(const std::string &type, uint32_t size)
 {
-  it_error_if(next_name == "", "Try to write without a name");
-  write_data_header(type, next_name, size);
-  next_name = "";
+  it_error_if(next_name() == "", "Try to write without a name");
+  write_data_header(type, next_name(), size);
+  next_name() = "";
 }
 
 void it_file_old::write_data_header(const std::string &type,
@@ -2380,7 +2377,7 @@ void it_file_old::write_data_header(const std::string &type,
   int skip;
 
   h1.endianity = static_cast<char>(s.get_native_endianity());
-  h1.hdr_bytes = 1 + 3 * 4 + type.size() + 1 + name.size() + 1;
+  h1.hdr_bytes = 1 + 3 * 4 + int(type.size()) + 1 + int(name.size()) + 1;
   h1.data_bytes = size;
   h1.block_bytes = h1.hdr_bytes + h1.data_bytes;
   h1.name = name;
@@ -2565,7 +2562,7 @@ void it_file_old::low_level_write(const cvec &v)
 
 void it_file_old::low_level_write(const std::string &str)
 {
-  int size = str.size();
+  int size = int(str.size());
   s << static_cast<int32_t>(size);
 
   for (int i = 0; i < size; i++)
@@ -3291,7 +3288,7 @@ it_file_old &operator<<(it_file_old &f, const cvec &v)
 
 it_file_old &operator<<(it_file_old &f, const std::string &str)
 {
-  f.write_data_header("string", sizeof(int) + str.size() * sizeof(char));
+  f.write_data_header("string", sizeof(int) + int(str.size()) * sizeof(char));
   f.low_level_write(str);
 
   return f;
@@ -3479,7 +3476,7 @@ it_file_old &operator<<(it_file_old &f, const Array<std::string> &v)
 
   // calculate total length of Array
   for (i = 0; i < v.size(); i++) {
-    sum_l += v(i).size();
+    sum_l += int(v(i).size());
   }
 
   // write header

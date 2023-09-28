@@ -31,6 +31,7 @@
 #define OFDM_H
 
 #include <itpp/base/vec.h>
+#include <itpp/itexports.h>
 
 
 namespace itpp
@@ -42,7 +43,7 @@ namespace itpp
 
   The modulated signal is normalized taking into account the cyclic prefix
 */
-class OFDM
+class ITPP_EXPORT OFDM
 {
 public:
   //! Empty constructor
@@ -53,13 +54,13 @@ public:
   int no_carriers() {return Nfft;}
   //! Set parameters
   void set_parameters(const int Nfft, const int Ncp, const int inNupsample = 1);
-  //! Modulate complex data symbols. Length of \c input must be \c Nfft
+  //! Modulate complex data symbols. Length of \c input must be an integer multiple of \c Nfft
   cvec modulate(const cvec &input);
-  //! Modulate complex data symbols. Length of \c input must be \c Nfft
+  //! Modulate complex data symbols. Length of \c input must be an integer multiple of \c Nfft
   void modulate(const cvec &input, cvec &output);
-  //! Demodulate to complex valued symbols. Length of \c input must be \c Nfft+Ncp
+  //! Demodulate to complex valued symbols. Length of \c input must be an integer multiple of \c Nfft+Ncp
   cvec demodulate(const cvec &input);
-  //! Demodulate to complex valued symbols. Length of \c input must be \c Nfft+Ncp
+  //! Demodulate to complex valued symbols. Length of \c input must be an integer multiple of \c Nfft+Ncp
   void demodulate(const cvec &input, cvec &output);
 private:
   double norm_factor;

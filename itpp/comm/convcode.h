@@ -34,7 +34,8 @@
 #include <itpp/base/array.h>
 #include <itpp/base/binary.h>
 #include <itpp/comm/channel_code.h>
-
+#include <itpp/itexports.h>
+#include <itpp/base/base_exports.h>
 
 namespace itpp
 {
@@ -50,6 +51,7 @@ enum CONVOLUTIONAL_CODE_TYPE {MFD, ODS};
   \ingroup fec
 */
 enum CONVOLUTIONAL_CODE_METHOD {Trunc, Tail, Tailbite};
+
 
 /*!
   \ingroup fec
@@ -99,7 +101,7 @@ enum CONVOLUTIONAL_CODE_METHOD {Trunc, Tail, Tailbite};
   Codes of rates R=1/2 through R=1/8 and Optimum Distance Spectrum
   (ODS) Codes of rates R=1/2 through R=1/4.
 */
-class Convolutional_Code : public Channel_Code
+class ITPP_EXPORT Convolutional_Code : public Channel_Code
 {
 public:
   //! Default constructor - sets (0133,0171) code with tail
@@ -448,19 +450,19 @@ protected:
   \relates Convolutional_Code
   \brief Reverses the bitrepresentation of in (of size length) and converts to an integer
 */
-int reverse_int(int length, int in);
+ITPP_EXPORT int reverse_int(int length, int in);
 
 /*!
   \relates Convolutional_Code
   \brief Calculate the Hamming weight of the binary representation of in of size length
 */
-int weight_int(int length, int in);
+ITPP_EXPORT int weight_int(int length, int in);
 
 /*!
   \relates Convolutional_Code
   \brief Compare two distance spectra. Return 1 if v1 is less, 0 if v2 less, and -1 if equal.
 */
-int compare_spectra(ivec v1, ivec v2);
+ITPP_EXPORT int compare_spectra(ivec v1, ivec v2);
 
 /*!
   \relates Convolutional_Code
@@ -468,7 +470,7 @@ int compare_spectra(ivec v1, ivec v2);
 
   Return 1 if v1 is less, 0 if v2 less, and -1 if equal.
 */
-int compare_spectra(ivec v1, ivec v2, vec weight_profile);
+ITPP_EXPORT int compare_spectra(ivec v1, ivec v2, vec weight_profile);
 
 } // namespace itpp
 

@@ -31,7 +31,8 @@
 #define MOG_DIAG_KMEANS_H
 
 #include <itpp/stat/mog_diag.h>
-
+#include <itpp/itexports.h>
+#include <itpp/base/base_exports.h>
 
 namespace itpp
 {
@@ -40,7 +41,7 @@ namespace itpp
   \brief support class for MOG_diag_kmeans()
   \author Conrad Sanderson
 */
-class MOG_diag_kmeans_sup : public MOG_diag
+class ITPP_EXPORT MOG_diag_kmeans_sup : public MOG_diag
 {
 
 public:

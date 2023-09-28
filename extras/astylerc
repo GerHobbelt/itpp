@@ -25,9 +25,9 @@
 # ----------------------------------------------------------------------
 indent=spaces=2
 brackets=linux
-brackets=break-closing
+break-closing-brackets
 indent-labels
-pad=oper
-unpad=paren
-one-line=keep-blocks
+pad-oper
+unpad-paren
+keep-one-line-blocks
 convert-tabs

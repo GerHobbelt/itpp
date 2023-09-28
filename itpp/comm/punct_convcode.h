@@ -33,7 +33,7 @@
 #include <itpp/base/mat.h>
 #include <itpp/base/array.h>
 #include <itpp/comm/convcode.h>
-
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -77,7 +77,7 @@ namespace itpp
   code.decode(rx_signal, decoded_bits);
   \endcode
 */
-class Punctured_Convolutional_Code : public Convolutional_Code
+class ITPP_EXPORT Punctured_Convolutional_Code : public Convolutional_Code
 {
 public:
   //! Constructor

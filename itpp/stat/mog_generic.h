@@ -32,7 +32,8 @@
 #include <itpp/base/vec.h>
 #include <itpp/base/mat.h>
 #include <itpp/base/array.h>
-
+#include <itpp/itexports.h>
+#include <itpp/base/base_exports.h>
 
 namespace itpp
 {
@@ -53,7 +54,7 @@ namespace itpp
   For speed and space reasons, diagonal and full
   covariance matrices are stored and handled separately.
 */
-class MOG_generic
+class ITPP_EXPORT MOG_generic
 {
 
 public:

@@ -31,44 +31,237 @@
 
 #include <itpp/base/random_dsfmt.h>
 #include <itpp/base/operators.h>
-
+#include <itpp/itexports.h>
 
 namespace itpp
 {
 
-//! \addtogroup randgen
+/*! \addtogroup randgen
+
+Set of functions to work with global seed provider:
+\code
+void GlobalRNG_reset(unsigned int seed);
+void GlobalRNG_reset();
+unsigned int GlobalRNG_get_local_seed();
+void GlobalRNG_randomize();
+void GlobalRNG_get_state(ivec &state);
+void GlobalRNG_set_state(const ivec &state);
+\endcode
+
+Global seed provider generate default seeds to initialize per-thread generators
+of pseudo-random numbers. Functions implement mutually exclusive access to the
+global seed provider instance.
+
+Be carefull,
+
+Mutual exclusion serializes access to the global seed provider
+context and protects its integrity. It does not guarantee the expected results
+if global seed provider is accessed simultaneously from several threads.
+
+For example,
+\code
+ivec st_before,st_after;
+GlobalRNG_get_state(st_before);
+GlobalRNG_set_state(st_before);
+GlobalRNG_get_state(st_after);
+assert(st_before==st_after);
+\endcode
+
+last assert can fail in multithreaded environment.
+
+Be aware,
+
+Global seed provider generates seeds to initialize non-initialized per-thread RNG contexts.
+Global seed provider is just a random numbers generator starting with default seed equal to
+4257U. When RNGs are created in some thread, global seed provider is queried for the new seed to
+initialize random number generation in the current thread.
+The first seed returned by the global seed provider is also 4257U by default. Other
+seeds are taken from the rng output directly. It is implemented this way because some ITPP tests
+implicitly rely on this value. Global seed provider internals are defined in random.cpp and can be changed
+easily if such a behaviour is not desirable.
+Global initialization can be overriden by the explicit call of the local context initialization function.
+Global seed provider changes will not affect already initialized contexts in running or parked threads, since
+global seeds are used during the local context initialization only.
+Local contexts get initialized upon creation of first RandomGenerator object in each thread. RNG_reset() without
+arguments can also query a global seed if local context is not initialized when the function is called.
+For example, if you want the main thread context to be affected by global settings,
+GlobalRNG_reset(seed) shall be called BEFORE the construction of first RandomGenerator object.
+The best place to do it is the very beginning of your main() function.
+If you create itpp library objects, encapsulating RNGs, statically, the main thread context will not be
+affected by any call to GlobalRNG_reset(s)/GlobalRNG_set_state(s). If you still want to
+have main-thread state be derived from the global context, you should do the following trick
+at the beginning of main():
+\code
+unsigned int my_global_seed = 0xAAAAAAAA;
+GlobalRNG_reset(my_global_seed);
+unsigned int s = GlobalRNG_get_local_seed(); //query new local seed
+RNG_reset(s); //set it maually for the main thread
+//you can call your main-thread RNGs here
+\endcode
+
+@{ */
+
+//! Set the internal seed of the Global Seed Provider
+ITPP_EXPORT void GlobalRNG_reset(unsigned int seed);
+
+//! Reset the internal seed of the Global Seed Provider to the previously set value
+ITPP_EXPORT void GlobalRNG_reset();
+
+//! Get new seed to initialize thread-local generators
+ITPP_EXPORT unsigned int GlobalRNG_get_local_seed();
+
+//! Set a random seed for the Global Seed Provider seed
+ITPP_EXPORT void GlobalRNG_randomize();
+
+//! Save current full state of global seed provider in memory
+ITPP_EXPORT void GlobalRNG_get_state(ivec &state);
+
+//! Resume the global seed provider state saved in memory
+ITPP_EXPORT void GlobalRNG_set_state(const ivec &state);
+
+//!@}
+
+
+/*! \addtogroup randgen
+
+Local (per-thread) RNG context management.
+\code
+void RNG_reset(unsigned int seed);
+void RNG_reset();
+void RNG_get_state(ivec &state);
+void RNG_set_state(const ivec &state);
+\endcode
+
+This set of functions allow to override seed value set from global seed provider and
+use custom seeds/initialization vectors for each thread (including main thread).
+
+@{ */
+
+//! Set the seed for all Random Number Generators in the current thread
+ITPP_EXPORT void RNG_reset(unsigned int seed);
 
 /*!
- * \brief Base class for random (stochastic) sources.
- * \ingroup randgen
+\brief Reset the seed to the previously set value for all Random Number Generators in the current thread.
+
+Seed will be queried from the global
+seed provider if Random Number generation context is not initialized
+*/
+ITPP_EXPORT void RNG_reset();
+
+//! Set a random seed for all Random Number Generators in the current thread
+ITPP_EXPORT void RNG_randomize();
+
+//! Save Random Number generation context used in the current thread
+ITPP_EXPORT void RNG_get_state(ivec &state);
+
+//! Resume Random Number generation in the current thread with previously stored context
+ITPP_EXPORT void RNG_set_state(const ivec &state);
+
+//!@}
+
+
+/*!
+ *\ingroup randgen
+ *\brief Base class for random (stochastic) sources.
  *
- * Random_Generator is a typedef of DSFMT class specialization using 19937
- * generation period.
+ * Random_Generator provides thread-safe generation of pseudo-random numbers
  *
  * \sa DSFMT
  */
-typedef DSFMT_19937_RNG Random_Generator;
+class ITPP_EXPORT Random_Generator
+{
+  typedef random_details::ActiveDSFMT DSFMT;
+public:
+  //! Default constructor
+  Random_Generator(): _dsfmt(random_details::lc_get()) {
+    if(!random_details::lc_is_initialized()) {
+      _dsfmt.init_gen_rand(GlobalRNG_get_local_seed());
+      random_details::lc_mark_initialized();
+    }
+  }
 
-//! \addtogroup randgen
-//!@{
+  //Constructor using a certain seed - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //Random_Generator(unsigned int seed) { init_gen_rand(seed); random_details::lc_mark_initialized();}
 
-//! Set the seed of the Global Random Number Generator
-void RNG_reset(unsigned int seed);
-//! Set the seed of the Global Random Number Generator to the same as last time
-void RNG_reset();
-//! Set a random seed for the Global Random Number Generator
-void RNG_randomize();
-//! Save the current state of the generator in a vector
-void RNG_get_state(ivec &state);
-//! Resume the state of the generator from previously saved vector
-void RNG_set_state(const ivec &state);
-//!@}
+  //provide wrappers for DSFMT algorithm functions
+
+  //Set the seed to a semi-random value (based on hashed time and clock)  - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //void randomize(){RNG_randomize();}
+
+  //Reset the generator with the same seed as used last time  - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //void reset() {RNG_reset();}
+
+  //Initialise the generator with a new seed (\sa init_gen_rand())  - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //void reset(unsigned int seed) { RNG_reset(seed); }
+
+  //Resume the state of the generator from a previously saved ivec  - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //void set_state(const ivec &state) {RNG_set_state(state);}
+
+  //Return current state of generator in the form of ivec  - do not want to provide it. Use free-standing functions to change per-thread local seed
+  //ivec get_state() const {ivec ret; RNG_get_state(ret); return ret; }
+
+  //! Return a uniformly distributed (0,1) value.
+  double random_01() { return genrand_open_open(); }
+  //! Return a uniformly distributed [0,1) value.
+  double random_01_lclosed() { return genrand_close_open(); }
+  //! Return a uniformly distributed (0,1] value.
+  double random_01_rclosed() { return genrand_open_close(); }
+  //! Return a uniformly distributed [0, UINT_MAX) value.
+  uint32_t random_int() { return genrand_uint32(); }
+
+  //! Generate uniform [0, UINT_MAX) integer pseudorandom number.
+  uint32_t genrand_uint32() { return _dsfmt.genrand_uint32(); }
+
+  /*!
+   * \brief Generate uniform [1, 2) double pseudorandom number.
+   *
+   * This function generates and returns double precision pseudorandom
+   * number which distributes uniformly in the range [1, 2).  This is
+   * the primitive and faster than generating numbers in other ranges.
+   * \c init_gen_rand() must be called before this function.
+   * \return double precision floating point pseudorandom number
+   */
+  double genrand_close1_open2() { return _dsfmt.genrand_close1_open2(); }
+
+  /*!
+   * \brief Generate uniform [0, 1) double pseudorandom number.
+   *
+   * This function generates and returns double precision pseudorandom
+   * number which distributes uniformly in the range [0, 1).
+   * \c init_gen_rand() must be called before this function.
+   * \return double precision floating point pseudorandom number
+   */
+  double genrand_close_open() { return genrand_close1_open2() - 1.0; }
+
+  /*!
+   * \brief Generate uniform (0, 1] double pseudorandom number.
+   *
+   * This function generates and returns double precision pseudorandom
+   * number which distributes uniformly in the range (0, 1].
+   * \c init_gen_rand() must be called before this function.
+   * \return double precision floating point pseudorandom number
+   */
+  double genrand_open_close() { return 2.0 - genrand_close1_open2(); }
+
+  /*!
+   * \brief Generate uniform (0, 1) double pseudorandom number.
+   *
+   * This function generates and returns double precision pseudorandom
+   * number which distributes uniformly in the range (0, 1).
+   * \c init_gen_rand() must be called before this function.
+   * \return double precision floating point pseudorandom number
+   */
+  double genrand_open_open() { return _dsfmt.genrand_open_open();}
+
+private:
+  DSFMT _dsfmt;
+};
 
 /*!
   \brief Bernoulli distribution
   \ingroup randgen
 */
-class Bernoulli_RNG
+class ITPP_EXPORT Bernoulli_RNG
 {
 public:
   //! Binary source with probability prob for a 1
@@ -94,12 +287,12 @@ public:
   //! Get a sample vector.
   void sample_vector(int size, bvec &out) {
     out.set_size(size, false);
-    for (int i = 0; i < size; i++) out(i) = sample();
+    for(int i = 0; i < size; i++) out(i) = sample();
   }
   //! Get a sample matrix.
   void sample_matrix(int rows, int cols, bmat &out) {
     out.set_size(rows, cols, false);
-    for (int i = 0; i < rows*cols; i++) out(i) = sample();
+    for(int i = 0; i < rows * cols; i++) out(i) = sample();
   }
 protected:
 private:
@@ -126,7 +319,7 @@ private:
   }
   \endcode
 */
-class I_Uniform_RNG
+class ITPP_EXPORT I_Uniform_RNG
 {
 public:
   //! constructor. Sets min and max values.
@@ -158,7 +351,7 @@ private:
   \brief Uniform distribution
   \ingroup randgen
 */
-class Uniform_RNG
+class ITPP_EXPORT Uniform_RNG
 {
 public:
   //! Constructor. Set min, max and seed.
@@ -190,12 +383,12 @@ public:
   //! Get a Uniformly distributed [0,1) vector
   void sample_vector(int size, vec &out) {
     out.set_size(size, false);
-    for (int i = 0; i < size; i++) out(i) = sample();
+    for(int i = 0; i < size; i++) out(i) = sample();
   }
   //! Get a Uniformly distributed [0,1) matrix
   void sample_matrix(int rows, int cols, mat &out) {
     out.set_size(rows, cols, false);
-    for (int i = 0; i < rows*cols; i++) out(i) = sample();
+    for(int i = 0; i < rows * cols; i++) out(i) = sample();
   }
 protected:
 private:
@@ -209,7 +402,7 @@ private:
   \brief Exponential distribution
   \ingroup randgen
 */
-class Exponential_RNG
+class ITPP_EXPORT Exponential_RNG
 {
 public:
   //! constructor. Set lambda.
@@ -244,12 +437,12 @@ private:
  * found at http://seehuhn.de/comp/ziggurat/, which is also included in
  * the GSL library (randlist/gauss.c).
  */
-class Normal_RNG
+class ITPP_EXPORT Normal_RNG
 {
 public:
   //! Constructor. Set mean and variance.
   Normal_RNG(double meanval, double variance):
-      mean(meanval), sigma(std::sqrt(variance)) {}
+    mean(meanval), sigma(std::sqrt(variance)) {}
   //! Constructor. Set mean and variance.
   Normal_RNG(): mean(0.0), sigma(1.0) {}
   //! Set mean, and variance
@@ -258,7 +451,7 @@ public:
   //! Get mean and variance
   void get_setup(double &meanval, double &variance) const;
   //! Get one sample.
-  double operator()() { return (sigma*sample() + mean); }
+  double operator()() { return (sigma * sample() + mean); }
   //! Get a sample vector.
   vec operator()(int n) {
     vec temp(n);
@@ -281,13 +474,13 @@ public:
   //! Get a Normal distributed (0,1) vector
   void sample_vector(int size, vec &out) {
     out.set_size(size, false);
-    for (int i = 0; i < size; i++) out(i) = sample();
+    for(int i = 0; i < size; i++) out(i) = sample();
   }
 
   //! Get a Normal distributed (0,1) matrix
   void sample_matrix(int rows, int cols, mat &out) {
     out.set_size(rows, cols, false);
-    for (int i = 0; i < rows*cols; i++) out(i) = sample();
+    for(int i = 0; i < rows * cols; i++) out(i) = sample();
   }
 private:
   double mean, sigma;
@@ -314,11 +507,11 @@ private:
  * R statistical language.
  * \author Vasek Smidl
  */
-class Gamma_RNG
+class ITPP_EXPORT Gamma_RNG
 {
 public:
   //! Constructor, which sets alpha (a) and beta (b)
-  Gamma_RNG(double a = 1.0, double b = 1.0): alpha(a), beta(b) {}
+  Gamma_RNG(double a = 1.0, double b = 1.0): alpha(a), beta(b) {init_state();}
   //! Set alpha and beta
   void setup(double a, double b) { alpha = a; beta = b; }
   //! Get one sample
@@ -330,17 +523,26 @@ public:
   //! Get a sample
   double sample();
 private:
+  //! Initializer of state variables
+  void init_state();
+  //! shape parameter of Gamma distribution
   double alpha;
+  //! inverse scale parameter of Gamma distribution
   double beta;
+
   Random_Generator RNG;
   Normal_RNG NRNG;
+
+  /* State variables - used in Gamma_Rng::sample()*/
+  double _s, _s2, _d, _scale;
+  double _q0, _b, _si, _c;
 };
 
 /*!
   \brief Laplacian distribution
   \ingroup randgen
 */
-class Laplace_RNG
+class ITPP_EXPORT Laplace_RNG
 {
 public:
   //! Constructor. Set mean and variance.
@@ -359,7 +561,7 @@ public:
   double sample() {
     double u = RNG.genrand_open_open();
     double l = sqrt_12var;
-    if (u < 0.5)
+    if(u < 0.5)
       l *= std::log(2.0 * u);
     else
       l *= -std::log(2.0 * (1 - u));
@@ -374,34 +576,35 @@ private:
   \brief A Complex Normal Source
   \ingroup randgen
 */
-class Complex_Normal_RNG
+class ITPP_EXPORT Complex_Normal_RNG
 {
 public:
   //! Constructor. Set mean and variance.
   Complex_Normal_RNG(std::complex<double> mean, double variance):
-      norm_factor(1.0 / std::sqrt(2.0)) {
+    norm_factor(1.0 / std::sqrt(2.0)) {
     setup(mean, variance);
   }
   //! Default constructor
-  Complex_Normal_RNG(): m(0.0), sigma(1.0), norm_factor(1.0 / std::sqrt(2.0)) {}
+  Complex_Normal_RNG(): m_re(0.0), m_im(0.0), sigma(1.0), norm_factor(1.0 / std::sqrt(2.0)) {}
   //! Set mean and variance
   void setup(std::complex<double> mean, double variance) {
-    m = mean;
+    m_re = mean.real();
+    m_im = mean.imag();
     sigma = std::sqrt(variance);
   }
   //! Get mean and variance
   void get_setup(std::complex<double> &mean, double &variance) {
-    mean = m;
+    mean = std::complex<double>(m_re, m_im);
     variance = sigma * sigma;
   }
   //! Get one sample.
-  std::complex<double> operator()() { return sigma*sample() + m; }
+  std::complex<double> operator()() { return sigma * sample() + std::complex<double>(m_re, m_im); }
   //! Get a sample vector.
   cvec operator()(int n) {
     cvec temp(n);
     sample_vector(n, temp);
     temp *= sigma;
-    temp += m;
+    temp += std::complex<double>(m_re, m_im);
     return temp;
   }
   //! Get a sample matrix.
@@ -409,7 +612,7 @@ public:
     cmat temp(h, w);
     sample_matrix(h, w, temp);
     temp *= sigma;
-    temp += m;
+    temp += std::complex<double>(m_re, m_im);
     return temp;
   }
   //! Get a Complex Normal (0,1) distributed sample
@@ -422,20 +625,21 @@ public:
   //! Get a Complex Normal (0,1) distributed vector
   void sample_vector(int size, cvec &out) {
     out.set_size(size, false);
-    for (int i = 0; i < size; i++) out(i) = sample();
+    for(int i = 0; i < size; i++) out(i) = sample();
   }
 
   //! Get a Complex Normal (0,1) distributed matrix
   void sample_matrix(int rows, int cols, cmat &out) {
     out.set_size(rows, cols, false);
-    for (int i = 0; i < rows*cols; i++) out(i) = sample();
+    for(int i = 0; i < rows * cols; i++) out(i) = sample();
   }
 
   //! Dummy assignment operator - MSVC++ warning C4512
   Complex_Normal_RNG & operator=(const Complex_Normal_RNG&) { return *this; }
 
 private:
-  std::complex<double> m;
+  double m_re;
+  double m_im;
   double sigma;
   const double norm_factor;
   Normal_RNG nRNG;
@@ -445,7 +649,7 @@ private:
   \brief Filtered normal distribution
   \ingroup randgen
 */
-class AR1_Normal_RNG
+class ITPP_EXPORT AR1_Normal_RNG
 {
 public:
   //! Constructor. Set mean, variance, and correlation.
@@ -466,7 +670,7 @@ public:
 private:
   double sample() {
     mem *= r;
-    if (odd) {
+    if(odd) {
       r1 = m_2pi * RNG.genrand_open_close();
       r2 = std::sqrt(factr * std::log(RNG.genrand_open_close()));
       mem += r2 * std::cos(r1);
@@ -498,7 +702,7 @@ typedef AR1_Normal_RNG AR1_Gauss_RNG;
   \brief Weibull distribution
   \ingroup randgen
 */
-class Weibull_RNG
+class ITPP_EXPORT Weibull_RNG
 {
 public:
   //! Constructor. Set lambda and beta.
@@ -526,7 +730,7 @@ private:
   \brief Rayleigh distribution
   \ingroup randgen
 */
-class Rayleigh_RNG
+class ITPP_EXPORT Rayleigh_RNG
 {
 public:
   //! Constructor. Set sigma.
@@ -546,7 +750,7 @@ private:
     double s1 = nRNG.sample();
     double s2 = nRNG.sample();
     // s1 and s2 are N(0,1) and independent
-    return (sig * std::sqrt(s1*s1 + s2*s2));
+    return (sig * std::sqrt(s1 * s1 + s2 * s2));
   }
   double sig;
   Normal_RNG nRNG;
@@ -556,7 +760,7 @@ private:
   \brief Rice distribution
   \ingroup randgen
 */
-class Rice_RNG
+class ITPP_EXPORT Rice_RNG
 {
 public:
   //! Constructor. Set sigma, and v (if v = 0, Rice -> Rayleigh).
@@ -576,7 +780,7 @@ private:
     double s1 = nRNG.sample() + s;
     double s2 = nRNG.sample();
     // s1 and s2 are N(0,1) and independent
-    return (sig * std::sqrt(s1*s1 + s2*s2));
+    return (sig * std::sqrt(s1 * s1 + s2 * s2));
   }
   double sig, s;
   Normal_RNG nRNG;

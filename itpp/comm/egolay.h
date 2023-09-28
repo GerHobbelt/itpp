@@ -32,7 +32,7 @@
 #include <itpp/base/vec.h>
 #include <itpp/base/mat.h>
 #include <itpp/comm/channel_code.h>
-
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -48,7 +48,7 @@ namespace itpp
   Wicker "Error Control Systems for Digital Communication and
   Storage", Prentice Hall, 1995 (page 143).
 */
-class Extended_Golay : public Channel_Code
+class ITPP_EXPORT Extended_Golay : public Channel_Code
 {
 public:
   //! Constructor

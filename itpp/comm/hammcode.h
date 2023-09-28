@@ -32,7 +32,7 @@
 #include <itpp/base/vec.h>
 #include <itpp/base/mat.h>
 #include <itpp/comm/channel_code.h>
-
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -41,7 +41,7 @@ namespace itpp
   \ingroup fec
   \brief Binary Hamming codes
 */
-class Hamming_Code : public Channel_Code
+class ITPP_EXPORT Hamming_Code : public Channel_Code
 {
 public:
   //! Constructor for \c hamming(n,k). n = pow(2,m)-1 and k = pow(2,m)-m-1.

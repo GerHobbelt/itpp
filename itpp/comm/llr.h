@@ -35,6 +35,7 @@
 #include <itpp/base/specmat.h>
 #include <itpp/base/matfunc.h>
 #include <limits>
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -120,7 +121,7 @@ const QLLR QLLR_MAX = (std::numeric_limits<QLLR>::max() >> 4);
   efficiency.
 
 */
-class LLR_calc_unit
+class ITPP_EXPORT LLR_calc_unit
 {
 public:
   //! Constructor, using the default table resolution
@@ -212,7 +213,7 @@ public:
   ivec get_Dint();
 
   //! Print some properties of the LLR calculation unit in plain text
-  friend std::ostream &operator<<(std::ostream &os, const LLR_calc_unit &l);
+  friend ITPP_EXPORT std::ostream &operator<<(std::ostream &os, const LLR_calc_unit &l);
 
 private:
   //! Compute the table for \f[ f(x) = \log(1+\exp(-x)) \f]
@@ -229,7 +230,7 @@ private:
   \relatesalso LLR_calc_unit
   \brief Print some properties of the LLR calculation unit in plain text.
 */
-std::ostream &operator<<(std::ostream &os, const LLR_calc_unit &lcu);
+ITPP_EXPORT std::ostream &operator<<(std::ostream &os, const LLR_calc_unit &lcu);
 
 
 // ----------------------------------------------------------------------

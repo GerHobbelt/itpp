@@ -41,8 +41,12 @@
 #if defined(_MSC_VER)
 #  include <cfloat>
 #  define finite(x) _finite(x)
+#ifndef HAVE_STD_ISFINITE
 #  define isfinite(x) _finite(x)
+#endif
+#ifndef HAVE_STD_ISNAN
 #  define isnan(x) _isnan(x)
+#endif
 #  define fpclass(x) _fpclass(x)
 #  define FP_NINF _FPCLASS_NINF
 #  define FP_PINF _FPCLASS_PINF
@@ -74,40 +78,39 @@ namespace std
 
 #ifndef HAVE_STD_ISINF
 #if (HAVE_DECL_ISINF == 1) || defined(HAVE_ISINF)
-inline int isinf(double x) { return ::isinf(x); }
+inline bool isinf(double x) { return (::isinf(x) != 0); }
 #elif defined(FPCLASS)
-inline int isinf(double x)
+inline bool isinf(double x)
 {
-  if (::fpclass(a) == FP_NINF) return -1;
-  else if (::fpclass(a) == FP_PINF) return 1;
-  else return 0;
+	if ((::fpclass(a) == FP_NINF) || (::fpclass(a) == FP_PINF)) return true;
+	return false;
 }
 #else
-inline int isinf(double x)
+inline bool isinf(double x)
 {
-  if ((x == x) && ((x - x) != 0.0)) return (x < 0.0 ? -1 : 1);
-  else return 0;
+  if ((x == x) && ((x - x) != 0.0)) return true;
+  else return false;
 }
 #endif // #if (HAVE_DECL_ISINF == 1) || defined(HAVE_ISINF)
 #endif // #ifndef HAVE_STD_ISINF
 
 #ifndef HAVE_STD_ISNAN
 #if (HAVE_DECL_ISNAN == 1) || defined(HAVE_ISNAN)
-inline int isnan(double x) { return ::isnan(x); }
+inline bool isnan(double x) { return (::isnan(x) != 0); }
 #else
-inline int isnan(double x) { return ((x != x) ? 1 : 0); }
+inline bool isnan(double x) { return ((x != x) ? true : false); }
 #endif // #if (HAVE_DECL_ISNAN == 1) || defined(HAVE_ISNAN)
 #endif // #ifndef HAVE_STD_ISNAN
 
 #ifndef HAVE_STD_ISFINITE
 #if (HAVE_DECL_ISFINITE == 1) || defined(HAVE_ISFINITE)
-inline int isfinite(double x) { return ::isfinite(x); }
+inline bool isfinite(double x) { return (::isfinite(x) != 0); }
 #elif defined(HAVE_FINITE)
-inline int isfinite(double x) { return ::finite(x); }
+inline bool isfinite(double x) { return (::finite(x) != 0); }
 #else
-inline int isfinite(double x)
+inline bool isfinite(double x)
 {
-  return ((!std::isnan(x) && !std::isinf(x)) ? 1 : 0);
+  return ((!std::isnan(x) && !std::isinf(x)) ? true : false);
 }
 #endif // #if (HAVE_DECL_ISFINITE == 1) || defined(HAVE_ISFINITE)
 #endif // #ifndef HAVE_STD_ISFINITE
@@ -120,12 +123,18 @@ inline int isfinite(double x)
 double tgamma(double x);
 #endif
 
-#if !defined(HAVE_LGAMMA) || (HAVE_DECL_SIGNGAM != 1)
+#if !defined(HAVE_LGAMMA) && (HAVE_DECL_SIGNGAM != 1)
+//Provide own definitions if both conditions are met:
+//-lgammma is not defined
+//-signgam  was not found
+//See ODR discussion in itcompat.cpp
+
 //! Lograrithm of an absolute gamma function
 double lgamma(double x);
 //! Global variable needed by \c lgamma function
 extern int signgam;
 #endif
+
 
 #ifndef HAVE_CBRT
 //! Cubic root
@@ -142,7 +151,7 @@ inline double log1p(double x) { return std::log(1.0 + x); }
 //! Base-2 logarithm
 inline double log2(double x)
 {
-  static const double one_over_log2 = 1.0 / std::log(2.0);
+  const double one_over_log2 = 1.0 / std::log(2.0);
   return std::log(x) * one_over_log2;
 }
 #endif

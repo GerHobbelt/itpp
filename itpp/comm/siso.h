@@ -30,6 +30,7 @@
 #define SISO_H
 
 #include <itpp/itbase.h> //IT++ base module
+#include <itpp/itexports.h>
 
 namespace itpp
 {
@@ -47,10 +48,27 @@ namespace itpp
   - demappers for Bit Interleaved Coded Modulation (BICM) systems
   - demappers for Space Time (ST) BICM systems
 
-   BPSK mapping is realized as follows: 0 -> +1 and 1 -> -1. Thus the xor truth
+   \note BPSK mapping is realized as follows: 0 -> +1 and 1 -> -1. Thus the xor truth
    table is preserved when multiplying BPSK symbols.
+
+   \note There is some overlap in functionality between the SISO class and the
+   Modulator_ND class as follows:
+   - When used for ST-BICM systems, both SISO and Modulator_ND classes can be used
+   for iterative (turbo reception), but the for the SISO class the emitter part
+   is implemented by the STC class, while for the Modulator_ND class the emitter
+   is implemented by the same class.
+   - When used for reception, the SISO class is more generic than the Modulator_ND
+   class since it allows the use of several ST codes following Hassibi's model
+   (see STC class) and several reception algorithms.
+   - The SISO demapper for ST-BICM systems when using V-BLAST as ST code can be
+   replaced by the ND demodulator (see Modulator_ND class). The best performance
+   could be achieved with the ND demodulator using FULL_ENUM_LOGMAP algorithm
+   followed by the SISO demapper with Hassibi_maxlogMAP algorithm (less complex
+   than FULL_ENUM_LOGMAP). There is no configuration in which the ND demodulator
+   and the SISO demapper can be considered completely equivalent (from an
+   implementation point of view).
  */
-class SISO
+class ITPP_EXPORT SISO
 {
 public:
     //! %SISO class constructor
@@ -68,7 +86,8 @@ public:
      * - maxlogMAP
      * - SOVA
      * - Viterbi
-     * Soft Output Viterbi Algorithm (SOVA) is equivalent to the MAP algorithm
+     *
+     * \note Soft Output Viterbi Algorithm (SOVA) is equivalent to the MAP algorithm
      * only when the a priori information is zero.
      */
     void set_map_metric(const std::string &in_MAP_metric);
@@ -157,6 +176,8 @@ public:
     //demodulator and MIMO demapper setup
     //! Sets symbol constellation
     /*! The correspondence between each symbol and its binary representation is given.
+     * Note that if the symbols are normalized to the square root of the number of emission antenna
+     * you should use the normalized constellation as input for this method.
      */
     void set_constellation(const int &in_nb_bits_symb, //!< the number of symbols
                            const itpp::cvec &in_constellation, //!< all possible symbols as a complex vector
@@ -176,13 +197,13 @@ public:
                           );
     //! Sets demapper method
     /*! Possible input values are:
-     * - Hassibi_MAP (maxlogMAP algorithm applied for ST block codes represented
+     * - Hassibi_maxlogMAP (maxlogMAP algorithm applied for ST block codes represented
      * using Hassibi's model)
      * - GA
      * - sGA (simplified GA)
      * - mmsePIC
      * - zfPIC (simplified mmsePIC)
-     * - Alamouti_MAP (maxlogMAP algorithm applied to Alamouti code using matched-filter
+     * - Alamouti_maxlogMAP (maxlogMAP algorithm applied to Alamouti code using matched-filter
      * reception method)
      */
     void set_demapper_method(const std::string &method);
@@ -330,7 +351,17 @@ private:
 
     // MAP algorithm variables
     //! MAP algorithm metric
-    std::string MAP_metric;
+    struct ITPP_EXPORT MAP_Metrics
+    {
+      enum Type {Unknown, logMAP, maxlogMAP, SOVA, Viterbi};
+      MAP_Metrics() : _t(Unknown) {}
+      MAP_Metrics(Type t) : _t(t) {}
+      operator Type () const {return _t;}
+    private:
+      Type _t;
+      template<typename T> operator T () const;
+    };
+    MAP_Metrics MAP_metric;
     //! Generator polynomials for convolutional codes (CC)
     itpp::bmat gen;
     //! Precoder generator polynomial
@@ -358,7 +389,17 @@ private:
     //! Scrambler pattern
     itpp::bvec scrambler_pattern;
     //! MUD method
-    std::string MUD_method;
+    struct ITPP_EXPORT MUD_Methods
+    {
+      enum Type {Unknown, sGCD, maxlogMAP, GCD};
+      MUD_Methods() : _t(Unknown) {}
+      MUD_Methods(Type t) : _t(t) {}
+      operator Type () const {return _t;}
+    private:
+      Type _t;
+      template<typename T> operator T () const;
+    };
+    MUD_Methods MUD_method;
     //constellation variables
     //! Number of bits/symbol
     int nb_bits_symb;
@@ -380,7 +421,17 @@ private:
     //! ST generator matrix 2
     itpp::cmat ST_gen2;
     //! Demapper method
-    std::string demapper_method;
+    struct ITPP_EXPORT Demapper_Methods
+    {
+      enum Type {Unknown, GA, Hassibi_maxlogMAP, sGA, mmsePIC, zfPIC, Alamouti_maxlogMAP};
+      Demapper_Methods() : _t(Unknown) {}
+      Demapper_Methods(Type t) : _t(t) {}
+      operator Type () const {return _t;}
+    private:
+      Type _t;
+      template<typename T> operator T () const;
+    };
+    Demapper_Methods demapper_method;
 
     //internal variables and functions
     //! FIR filter for a zero padded signals (\f$L\f$ zeros are added at the end of the signal, where \f$L\f$ is the order of the filter)
@@ -431,16 +482,24 @@ private:
     void EquivRecSig(itpp::vec &x_eq, const itpp::cmat &rec_sig);
     //! Finds equivalent channel with real coefficients
     void EquivCh(itpp::mat &H_eq, const itpp::cvec &H);
+    //! Computes equivalent symbols statistics (mean and variance of the real and imaginary part)
+    void compute_symb_stats(itpp::vec &Es, itpp::vec &Vs,
+	 		    int ns, int select_half, const itpp::vec &apriori_data,
+		   	    const itpp::vec &re_part, const itpp::vec &im_part,
+			    const itpp::bmat &re_bin_part, const itpp::bmat &im_bin_part);
+    static MAP_Metrics map_metric_from_string(const std::string &in_MAP_metric);
+    static MUD_Methods mud_method_from_string(const std::string &in_mud_method);
+    static Demapper_Methods demapper_method_from_string(const std::string &in_dem_method);
 };
 
 inline SISO::SISO()
 {
     tail = false;
-    MAP_metric = "maxlogMAP";
-    MUD_method = "sGCD";
+    MAP_metric = MAP_Metrics::maxlogMAP;
+    MUD_method = MUD_Methods::sGCD;
     scrambler_pattern = "0";//corresponds to +1 using BPSK mapping
     prec_gen = "1";
-    demapper_method = "GA";
+    demapper_method = Demapper_Methods::GA;
     Viterbi_win_len = 20;//should be set according to the generator polynomials
     SOVA_scaling_factor = 0.8;//set according to Wang [2003]
     SOVA_threshold = 10;//according to Wang [2003] an adaptive value should be used
@@ -449,9 +508,72 @@ inline SISO::SISO()
     Viterbi_hard_output_flag = false;
 }
 
+inline SISO::MAP_Metrics SISO::map_metric_from_string(const std::string &in_MAP_metric)
+{
+    if (in_MAP_metric=="logMAP")
+    {
+        return MAP_Metrics::logMAP;
+    } else if (in_MAP_metric=="maxlogMAP")
+    {
+        return MAP_Metrics::maxlogMAP;
+    } else if (in_MAP_metric=="SOVA")
+    {
+        return MAP_Metrics::SOVA;
+    } else if (in_MAP_metric=="Viterbi")
+    {
+        return MAP_Metrics::Viterbi;
+    } else
+    {
+        return MAP_Metrics::Unknown;
+    }
+}
+
+inline SISO::MUD_Methods SISO::mud_method_from_string(const std::string &in_mud_method)
+{
+    if (in_mud_method=="maxlogMAP")
+    {
+        return MUD_Methods::maxlogMAP;
+    } else if (in_mud_method=="sGCD")
+    {
+        return MUD_Methods::sGCD;
+    } else if (in_mud_method=="GCD")
+    {
+        return MUD_Methods::GCD;
+    } else
+    {
+        return MUD_Methods::Unknown;
+    }
+}
+
+inline SISO::Demapper_Methods SISO::demapper_method_from_string(const std::string &in_dem_method)
+{
+    if (in_dem_method=="Hassibi_maxlogMAP")
+    {
+        return Demapper_Methods::Hassibi_maxlogMAP;
+    } else if (in_dem_method=="Alamouti_maxlogMAP")
+    {
+        return Demapper_Methods::Alamouti_maxlogMAP;
+    } else if (in_dem_method=="GA")
+    {
+        return Demapper_Methods::GA;
+    } else if (in_dem_method=="sGA")
+    {
+        return Demapper_Methods::sGA;
+    } else if (in_dem_method=="mmsePIC")
+    {
+        return Demapper_Methods::mmsePIC;
+    } else if (in_dem_method=="zfPIC")
+    {
+        return Demapper_Methods::zfPIC;
+    } else
+    {
+        return Demapper_Methods::Unknown;
+    }
+}
+
 inline void SISO::set_map_metric(const std::string &in_MAP_metric)
 {
-    MAP_metric = in_MAP_metric;
+    MAP_metric = map_metric_from_string(in_MAP_metric);
 }
 
 inline void SISO::set_precoder_generator(const itpp::bvec &in_prec_gen)//set precoder polynomial
@@ -555,7 +677,7 @@ inline void SISO::set_scrambler_pattern(const itpp::bvec &phi)
 
 inline void SISO::set_mud_method(const std::string &method)
 {
-    MUD_method = method;
+    MUD_method = mud_method_from_string(method);
 }
 
 inline void SISO::set_constellation(const int &in_nb_bits_symb,
@@ -593,7 +715,7 @@ inline void SISO::set_st_block_code(const int &Q, const itpp::cmat &A,
 
 inline void SISO::set_demapper_method(const std::string &method)
 {
-    demapper_method = method;
+    demapper_method = demapper_method_from_string(method);
 }
 
 inline void SISO::rsc(itpp::vec &extrinsic_coded, itpp::vec &extrinsic_data,
@@ -612,17 +734,17 @@ inline void SISO::rsc(itpp::vec &extrinsic_coded, itpp::vec &extrinsic_data,
         return;
     }
 
-    if (MAP_metric=="logMAP")
+    if (MAP_metric==MAP_Metrics::logMAP)
     {
         rsc_logMAP(extrinsic_coded, extrinsic_data, intrinsic_coded, apriori_data);
-    } else if (MAP_metric=="maxlogMAP")
+    } else if (MAP_metric==MAP_Metrics::maxlogMAP)
     {
         rsc_maxlogMAP(extrinsic_coded, extrinsic_data, intrinsic_coded, apriori_data);
-    } else if (MAP_metric=="SOVA")
+    } else if (MAP_metric==MAP_Metrics::SOVA)
     {
         //no extrinsic information for coded bits is provided
         rsc_sova(extrinsic_data, intrinsic_coded, apriori_data, Viterbi_win_len);
-    } else if (MAP_metric=="Viterbi")
+    } else if (MAP_metric==MAP_Metrics::Viterbi)
     {
         rsc_viterbi(extrinsic_coded, extrinsic_data, intrinsic_coded, apriori_data, Viterbi_win_len);
     } else
@@ -647,9 +769,9 @@ inline void SISO::nsc(itpp::vec &extrinsic_coded, itpp::vec &extrinsic_data,
         return;
     }
 
-    if (MAP_metric=="logMAP")
+    if (MAP_metric==MAP_Metrics::logMAP)
         nsc_logMAP(extrinsic_coded, extrinsic_data, intrinsic_coded, apriori_data);
-    else if (MAP_metric=="maxlogMAP")
+    else if (MAP_metric==MAP_Metrics::maxlogMAP)
         nsc_maxlogMAP(extrinsic_coded, extrinsic_data, intrinsic_coded, apriori_data);
     else
         print_err_msg("SISO::nsc: unknown MAP metric. The MAP metric should be either logMAP or maxlogMAP");
@@ -679,9 +801,9 @@ inline void SISO::equalizer(itpp::vec &extrinsic_data, const itpp::vec &rec_sig,
         return;
     }
 
-    if (MAP_metric=="logMAP")
+    if (MAP_metric==MAP_Metrics::logMAP)
         equalizer_logMAP(extrinsic_data, rec_sig, apriori_data);
-    else if (MAP_metric=="maxlogMAP")
+    else if (MAP_metric==MAP_Metrics::maxlogMAP)
         equalizer_maxlogMAP(extrinsic_data, rec_sig, apriori_data);
     else
         print_err_msg("SISO::equalizer: unknown MAP metric. The MAP metric should be either logMAP or maxlogMAP");
@@ -701,11 +823,11 @@ inline void SISO::mud(itpp::mat &extrinsic_data, const itpp::vec &rec_sig,
         return;
     }
 
-    if (MUD_method=="maxlogMAP")
+    if (MUD_method==MUD_Methods::maxlogMAP)
         mud_maxlogMAP(extrinsic_data, rec_sig, apriori_data);
-    else if (MUD_method=="GCD")
+    else if (MUD_method==MUD_Methods::GCD)
         GCD(extrinsic_data, rec_sig, apriori_data);
-    else if (MUD_method=="sGCD")
+    else if (MUD_method==MUD_Methods::sGCD)
         sGCD(extrinsic_data, rec_sig, apriori_data);
     else
         print_err_msg("SISO::mud: unknown MUD method. The MUD method should be either maxlogMAP, GCD or sGCD");
@@ -724,9 +846,9 @@ inline void SISO::demapper(itpp::vec &extrinsic_data, const itpp::cvec &rec_sig,
         print_err_msg("SISO::demapper: constellation not initialized");
         return;
     }
-    if (MAP_metric=="logMAP")
+    if (MAP_metric==MAP_Metrics::logMAP)
         demodulator_logMAP(extrinsic_data, rec_sig, apriori_data);
-    else if (MAP_metric=="maxlogMAP")
+    else if (MAP_metric==MAP_Metrics::maxlogMAP)
         demodulator_maxlogMAP(extrinsic_data, rec_sig, apriori_data);
     else
         print_err_msg("SISO::demapper: unknown MAP metric. The MAP metric should be either logMAP or maxlogMAP");
@@ -751,17 +873,17 @@ inline void SISO::demapper(itpp::vec &extrinsic_data, const itpp::cmat &rec_sig,
         return;
     }
 
-    if (demapper_method=="Hassibi_maxlogMAP")
+    if (demapper_method==Demapper_Methods::Hassibi_maxlogMAP)
         Hassibi_maxlogMAP(extrinsic_data, rec_sig, apriori_data);
-    else if (demapper_method=="GA")
+    else if (demapper_method==Demapper_Methods::GA)
         GA(extrinsic_data, rec_sig, apriori_data);
-    else if (demapper_method=="sGA")
+    else if (demapper_method==Demapper_Methods::sGA)
         sGA(extrinsic_data, rec_sig, apriori_data);
-    else if (demapper_method=="mmsePIC")
+    else if (demapper_method==Demapper_Methods::mmsePIC)
         mmsePIC(extrinsic_data, rec_sig, apriori_data);
-    else if (demapper_method=="zfPIC")
+    else if (demapper_method==Demapper_Methods::zfPIC)
         zfPIC(extrinsic_data, rec_sig, apriori_data);
-    else if (demapper_method=="Alamouti_maxlogMAP")
+    else if (demapper_method==Demapper_Methods::Alamouti_maxlogMAP)
         Alamouti_maxlogMAP(extrinsic_data, rec_sig, apriori_data);
     else
         print_err_msg("SISO::demapper: unknown demapper method. The demapper method should be either Hassibi_maxlogMAP, GA, sGA, mmsePIC, zfPIC or Alamouti_maxlogMAP");
