@@ -1,8 +1,187 @@
+2011-09-15   Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
+
+	* itpp/base/gf2mat.cpp: Fixed assertion in
+	GF2mat_sparse_alist::read().  This closes bug report #3408884.
+	Thanks to Laurent Schmalen for providing the patch.
+
+2011-06-02   Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
+
+	* itpp/comm/ldpc.h, itpp/comm/ldpc.cpp: Added the possibility to
+	disable integrity checking when initiating an LDPC code. This
+	closes feature request #3309430.  Thanks to Laurent Schmalen for
+	providing the patch.
+
+2011-05-19   Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
+
+	* itpp/comm/ldpc.cpp: Fixed a bug in the LDPC decoder, that occurs
+	in the special case of a lonely variable node (i.e. a variable
+	node that is connected to only one check node) in the LDPC
+	decoder. The incoming C->V message was missing in the outgoing LLR
+	value. This special case is very rare but apparently occurs for
+	some codes in the DVB-T2 standard.  We thank Gorka Agujeta and
+	Daniel Ansorregui for pointing out this error.
+
+2011-05-05  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+        * itpp/comm/convcode.cpp, tests/convcode_test.cpp,
+	  tests/convcode_test.ref:
+	  fixed bug ID 3297666. Thanks Stephan Ludwig for providing the patch
+
+2011-04-13  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/base/operators.h, tests/Makefile.am,
+	  tests/operators_test.cpp, tests/operators_test.ref: corrected bug
+	  with ID 3180562
+
+2011-02-27  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/comm/stc.cpp, itpp/comm/stc.h, tests/stc_test.cpp,
+	  tests/stc_test.ref: changed STC interface, added error checking
+	  using it_assert()
+
+2011-02-21  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/comm/stc.cpp, itpp/comm/stc.h, tests/stc_test.cpp: added
+	  more error checking on input parameters
+
+2011-02-20  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* tests/stc_test.cpp, win32/itpp_acml_tests/itpp_acml_tests.sln,
+	  win32/itpp_mkl.sln, win32/itpp_mkl_tests/itpp_mkl_tests.sln:
+	  added tests for Visual Studio projects, corrected minor error in
+	  stc_test.cpp
+
+2011-02-20  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/comm/stc.cpp, itpp/comm/stc.h, tests/Makefile.am,
+	  tests/stc_test.cpp, tests/stc_test.ref: Corrected error in STC
+	  class when generating V-BLAST code. Simplified STC interface.
+	  Added test file for STC class.
+
+2011-02-17  Robert Orzechowski  <tytusz@users.sourceforge.net>
+	* itpp/comm/modulator_nd.h, itpp/comm/modulator_nd.cpp: 
+	  get_symbols() return symbols without additional 0.0 symbol.
+	* itpp/comm/modulator_nd.h, itpp/comm/modulator_nd.cpp, 
+	  itpp/comm/modulator.h: added few getters to have similar 
+	  ND_UQAM class usage as QAM class (both can be used with 
+	  SISO class since now).
+
+2011-01-09  Robert Orzechowski  <tytusz@users.sourceforge.net>
+
+	* itpp/comm/modulator_nd.h, itpp/comm/modulator_nd.cpp: added 
+	  set_constellation_points method to ND_UQAM modulator class.
+	
+2011-01-01  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* doc/local/linking.doc, doc/tutorial/pccc_bersim_awgn.doc: added
+	  help for pyitpp module
+
+2011-01-01  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* extras/Makefile.am, extras/gen_test_itload.cpp, extras/pyitpp.py,
+	  extras/test_pyitpp.it, extras/test_pyitpp.py: added pyitpp module
+	  providing itload() function for python, similar to MATLAB
+	  itload.m
+
+2010-12-31  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* win32/itpp_acml_tests/itpp_acml_tests.sln,
+	  win32/itpp_mkl_tests/itpp_mkl_tests.sln: corrected solution files
+	  for ACML and MKL for backward compatibility
+
+2010-12-31  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* ChangeLog, ChangeLog-2009: separated ChangeLog file into
+	  ChangeLog-2009 and ChangeLog (contains only logs from 2010)
+
+2010-12-31  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/base/specmat.cpp, tests/linspace_test.cpp,
+	  tests/linspace_test.ref: changed algorithm for
+	  linspace_fixed_step so that it works when generating vectors in
+	  ascending or descending order
+
+2010-12-04  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/base/specmat.cpp, itpp/base/specmat.h,
+	  tests/linspace_test.cpp, tests/linspace_test.ref:
+	  linspace_fixed_step() is now a templated function
+
+2010-12-03  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+        * win32/itpp_mkl.sln, win32/itpp_mkl_tests/itpp_mkl_tests.sln,
+          win32/itpp_mkl_tests/linspace_test.vcproj: added tests for
+	  Visual Studio C++ with MKL
+
+2010-12-03  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+        * tests/linspace_test.cpp, win32/itpp_acml.sln,
+  	  win32/itpp_acml_tests/itpp_acml_tests.sln,
+          win32/itpp_acml_tests/linspace_test.vcproj: added test support
+          for Visual Studio C++ with ACML
+
+2010-12-03  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/base/specmat.cpp, itpp/base/specmat.h, tests/Makefile.am,
+	  tests/linspace_test.ref, tests/linspace_test.cpp: changed linspace()
+	  in order to have MATLAB like behavior, added linspace_fixed_step()
+	  in order to provide an equivalent for from:step:to from MATLAB
+
+2010-10-28  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/comm/rec_syst_conv_code.cpp, itpp/comm/rec_syst_conv_code.h:
+	  data members of the Rec_Syst_Conv_Code class used as internal
+	  variables of the MAP algorithm (alpha, beta, gamma and denom) are
+	  now declared local to each decode method, thus the allocated heap
+	  memory is immediately freed when the MAP algorithm ends
+
+2010-10-12  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* NEWS: updated NEWS file
+
+2010-10-12  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* tests/fastica_test.cpp, tests/fastica_test.ref: improved fastica
+	  test
+
+2010-10-12  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* itpp/signal/fastica.cpp, itpp/signal/fastica.h,
+	  tests/fastica_test.cpp, tests/fastica_test.ref: Solved bug
+	  report: FastICA may run forever with APPROACH_DEFL - ID 3028968
+	  Thanks to Gert Wollny for the patch
+
+2010-09-26  Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
+
+	* itpp/base/math/log_exp.h: Fix spelling error in documentation
+	This closes #3075538
+
+2010-09-22  Adam Piatyszek  <ediap@users.sourceforge.net>
+
+	* doc/Makefile.am: Improve installation target for HTML
+	documentation
+
+2010-09-22  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* doc/Makefile.am: add support for copying search index
+	which now is found in search folder under html folder
+
+2010-09-22  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* doxygen_html.cfg.in: updated doxygen configuration
+
 2010-09-21  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
-        * IT++ 4.2.0 release (SVN tag: release-4-2-0)
-        * NEWS, VERSION: Add release notes and update version number for
-        IT++ 4.2.0 release.
+	* VERSION: add version number for development version after
+	releasing IT++ 4.2.0
+
+-------------------------------------------------------------------------------
+
+2010-09-21  Bogdan Cristea  <cristeab@users.sourceforge.net>
+
+	* IT++ 4.2.0 release (SVN tag: release-4-2-0)
+	* NEWS, VERSION: Add release notes and update version number for
+	IT++ 4.2.0 release.
 
 2010-09-05  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
@@ -11,7 +190,7 @@
 
 2010-08-30  Bogdan Cristea  <cristeab@users.sourceforge.net>
 	* itpp/base/binfile.cpp, itpp/base/itfile.cpp, itpp/comm/exit.cpp,
-          itpp/comm/exit.h, itpp/comm/siso.h, itpp/comm/siso_dem.cpp,
+	  itpp/comm/exit.h, itpp/comm/siso.h, itpp/comm/siso_dem.cpp,
 	  itpp/comm/siso_eq.cpp, itpp/comm/siso_mud.cpp,
 	  itpp/comm/siso_nsc.cpp, itpp/comm/siso_rsc.cpp, itpp/comm/stc.h,
 	  itpp/srccode/audiofile.cpp: corrected warnings in VS 2010
@@ -47,7 +226,7 @@
 2010-04-04  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
 	* doc/tutorial/vector_and_matrix.doc: corrected minor typo:
-	  matrices instead of matrixes
+	  matrices instead of matries
 
 2010-04-04  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
@@ -69,7 +248,7 @@
 
 2010-03-18  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
-	* win32/itpp_acml_tests/exit_test.vcproj, win32/itpp_acml_tests/itpp_acml_tests.sln, 
+	* win32/itpp_acml_tests/exit_test.vcproj, win32/itpp_acml_tests/itpp_acml_tests.sln,
 	win32/itpp_acml_tests/siso_test.vcproj, win32/itpp_mkl.vcproj, win32/itpp_mkl_tests/exit_test.vcproj
 	win32/itpp_mkl_tests/itpp_mkl_tests.sln, win32/itpp_mkl_tests/siso_test.vcproj: added Visual Studio
 	projects for ACML and MKL.
@@ -78,7 +257,7 @@
 
 	* itpp/comm/siso.h, itpp/comm/siso_rsc.cpp, itpp/comm/siso_nsc.cpp,
 	itpp/comm/siso_mud.cpp,	itpp/comm/siso_eq.cpp, itpp/comm/siso_dem.cpp,
-	itpp/comm/exit.h, itpp/comm/exit.cpp, itpp/comm/stc.h, itpp/comm/stc.cpp, 
+	itpp/comm/exit.h, itpp/comm/exit.cpp, itpp/comm/stc.h, itpp/comm/stc.cpp,
 	tests/exit_test.cpp, tests/siso_test.cpp: added Soft Input Soft Output
 	(SISO) class for turbo receivers design, EXtrinsic Information
 	Transfer (EXIT) class for studying the convergence of turbo receivers
@@ -99,14 +278,14 @@
 
 2010-02-24  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
-	* itpp/tests/bessel_test.cpp, itpp/tests/filter_design_test.cpp, 
-	itpp/tests/itfile_test.cpp, itpp/tests/newton_search_test.cpp, 
-	itpp/tests/pulse_shape_test.cpp: fixed format is used instead of 
+	* itpp/tests/bessel_test.cpp, itpp/tests/filter_design_test.cpp,
+	itpp/tests/itfile_test.cpp, itpp/tests/newton_search_test.cpp,
+	itpp/tests/pulse_shape_test.cpp: fixed format is used instead of
 	scientific format in order to pass tests checking in Visual C++.
 	As a consequence, the itpp/tests/*.ref files corresponding to the above tests are also changed.
 
-	* itpp/win32/itpp_acml.vcproj, itpp/win32/itpp_acml_tests/*vcproj, 
-	itpp/win32/itpp_mkl.vcproj, itpp/win32/itpp_mkl_tests/*vcproj: added 
+	* itpp/win32/itpp_acml.vcproj, itpp/win32/itpp_acml_tests/*vcproj,
+	itpp/win32/itpp_mkl.vcproj, itpp/win32/itpp_mkl_tests/*vcproj: added
 	automatic test checking in Visual C++, project files are converted to Visual C++ 2008.
 	The tests checking is implemented for each project as a "Post-Build Event".
 
@@ -213,7 +392,7 @@
 
 2010-01-02  Bogdan Cristea  <cristeab@users.sourceforge.net>
 
-        * itpp/base/itcompat.h: Fixes bug report #2924984
+	* itpp/base/itcompat.h: Fixes bug report #2924984
 
 2010-01-02  Adam Piatyszek  <ediap@users.sourceforge.net>
 
@@ -226,83 +405,3 @@
 	* configure.ac.in, itpp-config.1.in, extras/*, itpp/**/*.cpp,
 	itpp/**/*.h, tests/*.cpp: Update copyright dates to `1995-2010'
 
-2009-12-28  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* doc/local/index.doc.in: Update links
-
-	* AUTHORS, doc/local/authors.doc: Update the list of developers
-
--------------------------------------------------------------------------------
-
-2009-12-27  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* IT++ 4.0.7 release (SVN tag: release-4-0-7)
-
-	* NEWS, VERSION: Add release notes and update version number for
-	IT++ 4.0.7 release.
-
-	* configure.ac.in: Do not enable any optimization for the debug
-	build
-
-2009-12-26  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* tests/fastica_test.cpp: Suppress a warning message of GCC 4.4
-
-	* itpp/base/vec.cpp, itpp/base/vec.h, tests/vec_test.cpp,
-	tests/vec_test.ref: Support equality "==" and inequality "!="
-	operators for cvec type.
-
-	This patch fixes bug report #2909998.
-
-2009-12-12  Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
-
-	* itpp/comm/llr.h, itpp/comm/turbo.h, itpp/comm/ldpc.h,
-	itpp/comm/modulator_nd.h: Improved documentation on the accuracy
-	of LLR calculations.
-
-2009-10-11  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* itpp/base/array.h: Pass by reference, not by value
-
-2009-09-29  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* m4/acx_blas.m4: Add support for detecting MKL 10.2 libraries
-	using GCC
-
-2009-08-06  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* configure.ac.in, doc/local/documentation.doc, extras/*,
-	itpp-config.1.in, itpp/**/*.cpp, itpp/**/*.h, tests/*.cpp:
-	Copyright dates updated to `1995-2009'
-
-2009-05-12   Erik G. Larsson  <erik_g_larsson@users.sourceforge.net>
-
-	* doc/local/verification.doc: Added Ubuntu 9.04 to list of tested
-	systems
-
-2009-03-17  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* itpp/comm/bch.cpp, tests/bch_test.ref: Change polynomial bit
-	mapping convention in BCH code.
-
-	Matlab (and the DVB-T standard) use different mapping of the bits to
-	polynomial representation:
-	- Matlab maps highest order first:
-	  1010 <-> i(x)=1*x^3 + 0*x^2 + 1*x^1 + 0*x^0 = x^3 + x
-	- IT++ maps lowest order first:
-	  1010 <-> i(x)= 1*x^0 + 0*x^1 + 1*x^2 + 0*x^3 = x^2 + 1
-	This is because the GFX class indexes the coefficients according
-	to their powers (i[0] <-> x^0), which is again intuitive.
-
-	The attached patches changes the IT++ behaviour to the approach
-	used in Matlab, in order to become consistent with the more common
-	way.
-
-	Signed-off-by: Stephan Ludwig <donludovico@users.sourceforge.net>
-
-2009-01-30  Adam Piatyszek  <ediap@users.sourceforge.net>
-
-	* itpp/base/itfile.h, itpp/base/vec.h: Minor spelling and grammar
-	fixes
-
-	Signed-off-by: Kumar Appaiah <a.kumar@alumni.iitm.ac.in>
