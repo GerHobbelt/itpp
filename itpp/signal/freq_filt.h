@@ -54,7 +54,7 @@ namespace itpp
   response. The resulting data is then inversed Fourier transformed to return
   a filtered time domain signal.
 
-  Freq_Filt is a templated class. The template paramter \c Num_T defines the
+  Freq_Filt is a templated class. The template parameter \c Num_T defines the
   data type for the impulse response \c b, input data \c x and output data
   \c y.
 
